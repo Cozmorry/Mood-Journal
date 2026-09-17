@@ -22,6 +22,8 @@ accounts, no network calls. Everything lives on-device.
 - [Testing](#testing)
 - [Roadmap](#roadmap)
 - [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Purpose
 
@@ -194,3 +196,16 @@ Full design and implementation detail lives under `docs/superpowers/`:
   purpose, scope, architecture, data model, and error-handling decisions.
 - [Implementation plan](docs/superpowers/plans/2026-09-15-mood-journal-mvp.md) —
   the task-by-task build plan derived from the spec.
+
+## Contributing
+
+Contributions, bug reports, and suggestions are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to set up the project, coding
+guidelines, and how to submit a pull request.
+
+This project follows a [Code of Conduct](CODE_OF_CONDUCT.md); participation
+implies agreement to abide by it.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
