@@ -29,6 +29,8 @@ class EntryEditorViewModel(
     private val _uiState = MutableStateFlow(EntryEditorUiState(entryId = entryId))
     val uiState: StateFlow<EntryEditorUiState> = _uiState.asStateFlow()
 
+    private var saveInFlight = false
+
     init {
         if (entryId != 0L) {
             viewModelScope.launch {
@@ -60,7 +62,8 @@ class EntryEditorViewModel(
 
     fun save() {
         val state = _uiState.value
-        if (!state.isSaveEnabled) return
+        if (!state.isSaveEnabled || saveInFlight) return
+        saveInFlight = true
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             repository.save(

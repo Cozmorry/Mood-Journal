@@ -4,7 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +40,7 @@ fun MoodTrendScreen(
                 title = { Text("Mood trend") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
             )
@@ -58,13 +58,12 @@ fun MoodTrendScreen(
                     .padding(padding)
                     .padding(16.dp),
             ) {
-                val minX = points.first().timestampMillis.toFloat()
-                val maxX = points.last().timestampMillis.toFloat()
-                val spanX = (maxX - minX).coerceAtLeast(1f)
+                val minT = points.first().timestampMillis
+                val spanT = (points.last().timestampMillis - minT).coerceAtLeast(1L)
                 val maxScore = 5f
 
                 val offsets = points.map { point ->
-                    val xFraction = (point.timestampMillis - minX) / spanX
+                    val xFraction = (point.timestampMillis - minT).toFloat() / spanT.toFloat()
                     val yFraction = point.score / maxScore
                     Offset(
                         x = xFraction * size.width,

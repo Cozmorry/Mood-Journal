@@ -48,7 +48,7 @@ fun MoodJournalNavHost(
             EntryEditorScreen(
                 repository = repository,
                 entryId = entryId,
-                onDone = { navController.popBackStack() },
+                onDone = { navController.popBackStack(Routes.ENTRY_LIST, inclusive = false) },
             )
         }
         composable(Routes.MOOD_TREND) {

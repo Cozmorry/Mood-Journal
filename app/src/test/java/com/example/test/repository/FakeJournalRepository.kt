@@ -4,6 +4,7 @@ import com.example.test.data.JournalEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeJournalRepository : JournalRepository {
     private val entriesFlow = MutableStateFlow<List<JournalEntry>>(emptyList())
@@ -11,10 +12,13 @@ class FakeJournalRepository : JournalRepository {
 
     val currentEntries: List<JournalEntry> get() = entriesFlow.value
 
-    override fun getAll(): Flow<List<JournalEntry>> = entriesFlow.asStateFlow()
+    override fun getAll(): Flow<List<JournalEntry>> =
+        entriesFlow.map { it.sortedByDescending(JournalEntry::createdAt) }
 
     override fun getSince(sinceEpochMillis: Long): Flow<List<JournalEntry>> =
-        MutableStateFlow(entriesFlow.value.filter { it.createdAt >= sinceEpochMillis }).asStateFlow()
+        MutableStateFlow(
+            entriesFlow.value.filter { it.createdAt >= sinceEpochMillis }.sortedBy(JournalEntry::createdAt),
+        ).asStateFlow()
 
     override suspend fun getById(id: Long): JournalEntry? =
         entriesFlow.value.find { it.id == id }
