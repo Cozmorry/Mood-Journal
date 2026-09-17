@@ -10,12 +10,14 @@ import androidx.navigation.navArgument
 import com.example.test.repository.JournalRepository
 import com.example.test.ui.editor.EntryEditorScreen
 import com.example.test.ui.list.EntryListScreen
+import com.example.test.ui.trend.MoodTrendScreen
 
 object Routes {
     const val ENTRY_LIST = "entryList"
     const val ENTRY_EDITOR = "entryEditor"
     const val ENTRY_EDITOR_ARG_ID = "entryId"
     const val ENTRY_EDITOR_NEW = "$ENTRY_EDITOR?$ENTRY_EDITOR_ARG_ID=0"
+    const val MOOD_TREND = "moodTrend"
     fun entryEditorEdit(id: Long) = "$ENTRY_EDITOR?$ENTRY_EDITOR_ARG_ID=$id"
 }
 
@@ -30,7 +32,7 @@ fun MoodJournalNavHost(
                 repository = repository,
                 onAddEntry = { navController.navigate(Routes.ENTRY_EDITOR_NEW) },
                 onEntryClick = { id -> navController.navigate(Routes.entryEditorEdit(id)) },
-                onShowTrend = {},
+                onShowTrend = { navController.navigate(Routes.MOOD_TREND) },
             )
         }
         composable(
@@ -47,6 +49,12 @@ fun MoodJournalNavHost(
                 repository = repository,
                 entryId = entryId,
                 onDone = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.MOOD_TREND) {
+            MoodTrendScreen(
+                repository = repository,
+                onBack = { navController.popBackStack() },
             )
         }
     }
