@@ -30,6 +30,8 @@
 **Files:**
 - Modify: `gradle/libs.versions.toml`
 - Modify: `app/build.gradle.kts`
+- Modify: `app/src/main/AndroidManifest.xml`
+- Create: `app/src/main/res/xml/file_paths.xml`
 - Create: `app/src/main/java/com/example/test/repository/PhotoStorage.kt`
 - Create: `app/src/main/java/com/example/test/repository/FilePhotoStorage.kt`
 - Create: `app/src/test/java/com/example/test/repository/FakePhotoStorage.kt`
@@ -37,7 +39,7 @@
 
 **Interfaces:**
 - Consumes: nothing (first task).
-- Produces: `data class CameraCapture(val uri: Uri, val filename: String)`; `PhotoStorage` interface (`suspend fun copyFrom(uri: Uri): String`, `fun newCameraCapture(): CameraCapture`, `fun delete(photoPath: String)`, `fun resolve(photoPath: String): File`); `FilePhotoStorage(context: Context)` implementing it against `context.filesDir/photos/`; `FakePhotoStorage` (in-memory, tracks `copiedUris`/`deletedPaths` for assertions) for later ViewModel tests.
+- Produces: `data class CameraCapture(val uri: Uri, val filename: String)`; `PhotoStorage` interface (`suspend fun copyFrom(uri: Uri): String`, `fun newCameraCapture(): CameraCapture`, `fun delete(photoPath: String)`, `fun resolve(photoPath: String): File`); `FilePhotoStorage(context: Context)` implementing it against `context.filesDir/photos/`; `FakePhotoStorage` (in-memory, tracks `copiedUris`/`deletedPaths` for assertions) for later ViewModel tests; a registered `FileProvider` (authority `${applicationId}.fileprovider`) that Task 3 reuses as-is for the camera capture intent.
 
 - [ ] **Step 1: Add the Coil dependency**
 
@@ -124,9 +126,8 @@ class FilePhotoStorageTest {
 
 - [ ] **Step 4: Run it to confirm it fails to compile**
 
-Confirm a device is available: `adb devices` (must list at least one).
-Run: `./gradlew :app:connectedDebugAndroidTest --tests "com.example.test.repository.FilePhotoStorageTest"`
-Expected: FAIL with "unresolved reference: FilePhotoStorage"
+Run: `./gradlew :app:compileDebugAndroidTestKotlin`
+Expected: FAIL with "unresolved reference: FilePhotoStorage" — this is a plain compile check, so it doesn't need a device yet.
 
 - [ ] **Step 5: Create the PhotoStorage interface**
 
@@ -196,12 +197,72 @@ class FilePhotoStorage(private val context: Context) : PhotoStorage {
 }
 ```
 
-- [ ] **Step 7: Run the test to confirm it passes**
+- [ ] **Step 7: Register the FileProvider**
 
-Run: `./gradlew :app:connectedDebugAndroidTest --tests "com.example.test.repository.FilePhotoStorageTest"`
+`newCameraCapture()` calls `FileProvider.getUriForFile()`, which requires the provider to already be declared in the manifest — without it, `FilePhotoStorageTest`'s `newCameraCapture_returnsAWritableUriAndMatchingFilename` fails at runtime with `IllegalArgumentException: Couldn't find meta-data for provider`. Set it up now rather than later, since this test already exercises it.
+
+Create `app/src/main/res/xml/file_paths.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="photos" path="photos/" />
+</paths>
+```
+
+In `app/src/main/AndroidManifest.xml`, add a `<uses-permission>` for the camera before `<application>` (needed later, in Task 3, but harmless to declare now), and a `<provider>` inside `<application>`, after the closing `</activity>` tag:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Test">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
+```
+
+Note: `FilePhotoStorage` builds its `FileProvider` authority as `"${context.packageName}.fileprovider"` — `context.packageName` resolves to the same value the manifest's `${applicationId}` placeholder expands to at build time, so these match.
+
+- [ ] **Step 8: Run the test to confirm it passes**
+
+Run: `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.test.repository.FilePhotoStorageTest`
 Expected: all 3 tests PASS
 
-- [ ] **Step 8: Create the fake for later ViewModel tests**
+Note: `connectedDebugAndroidTest` doesn't support Gradle's `--tests` filter in this AGP version — use the `-Pandroid.testInstrumentationRunnerArguments.class=<FQCN>` runner argument instead (comma-separate multiple classes).
+
+- [ ] **Step 9: Create the fake for later ViewModel tests**
 
 Create `app/src/test/java/com/example/test/repository/FakePhotoStorage.kt`:
 
@@ -234,16 +295,16 @@ class FakePhotoStorage : PhotoStorage {
 }
 ```
 
-- [ ] **Step 9: Verify the fake compiles**
+- [ ] **Step 10: Verify the fake compiles**
 
 Run: `./gradlew :app:compileDebugUnitTestKotlin`
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 11: Commit**
 
 ```bash
-git add gradle/libs.versions.toml app/build.gradle.kts app/src/main/java/com/example/test/repository/PhotoStorage.kt app/src/main/java/com/example/test/repository/FilePhotoStorage.kt app/src/test/java/com/example/test/repository/FakePhotoStorage.kt app/src/androidTest/java/com/example/test/repository/FilePhotoStorageTest.kt
-git commit -m "feat: add PhotoStorage subsystem and Coil dependency"
+git add gradle/libs.versions.toml app/build.gradle.kts app/src/main/java/com/example/test/repository/PhotoStorage.kt app/src/main/java/com/example/test/repository/FilePhotoStorage.kt app/src/test/java/com/example/test/repository/FakePhotoStorage.kt app/src/androidTest/java/com/example/test/repository/FilePhotoStorageTest.kt app/src/main/AndroidManifest.xml app/src/main/res/xml/file_paths.xml
+git commit -m "feat: add PhotoStorage subsystem, Coil dependency, and FileProvider"
 ```
 
 ---
@@ -396,7 +457,7 @@ abstract class AppDatabase : RoomDatabase() {
 - [ ] **Step 5: Run the migration test and the existing DAO tests**
 
 Confirm a device is available: `adb devices` (must list at least one).
-Run: `./gradlew :app:connectedDebugAndroidTest --tests "com.example.test.data.AppDatabaseMigrationTest" --tests "com.example.test.data.JournalEntryDaoTest"`
+Run: `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.test.data.AppDatabaseMigrationTest,com.example.test.data.JournalEntryDaoTest`
 Expected: all tests PASS (the DAO tests still pass unchanged — `photoPath` defaults to `null`, so every existing `JournalEntry(...)` call site still compiles).
 
 - [ ] **Step 6: Commit**
@@ -408,11 +469,9 @@ git commit -m "feat: add photoPath column via additive Room migration"
 
 ---
 
-## Task 3: FileProvider + EntryEditorViewModel photo state + EntryEditorScreen UI
+## Task 3: EntryEditorViewModel photo state + EntryEditorScreen UI
 
 **Files:**
-- Modify: `app/src/main/AndroidManifest.xml`
-- Create: `app/src/main/res/xml/file_paths.xml`
 - Modify: `app/src/main/java/com/example/test/ui/editor/EntryEditorViewModel.kt` (replace entire file)
 - Modify: `app/src/test/java/com/example/test/ui/editor/EntryEditorViewModelTest.kt` (replace entire file)
 - Modify: `app/src/main/java/com/example/test/ui/editor/EntryEditorScreen.kt` (replace entire file)
@@ -420,7 +479,7 @@ git commit -m "feat: add photoPath column via additive Room migration"
 - Modify: `app/src/main/java/com/example/test/MainActivity.kt` (replace entire file)
 
 **Interfaces:**
-- Consumes: `PhotoStorage`, `FilePhotoStorage`, `FakePhotoStorage`, `CameraCapture` from Task 1; `JournalEntry.photoPath` from Task 2.
+- Consumes: `PhotoStorage`, `FilePhotoStorage`, `FakePhotoStorage`, `CameraCapture`, and the registered `FileProvider` from Task 1; `JournalEntry.photoPath` from Task 2.
 - Produces: `EntryEditorUiState.photoPath: String?`; `EntryEditorViewModel(repository, photoStorage, entryId)` with new `onPhotoPicked(path: String)`/`onPhotoRemoved()`; `EntryEditorScreen(repository, photoStorage, entryId, onDone, onViewPhoto: (String) -> Unit)`. `MoodJournalNavHost` gains a `photoStorage: PhotoStorage` parameter. `onViewPhoto` is wired to a no-op `{}` here — Task 4 replaces it with real navigation once the viewer screen exists.
 
 - [ ] **Step 1: Write the failing ViewModel tests**
@@ -706,63 +765,9 @@ class EntryEditorViewModel(
 Run: `./gradlew :app:testDebugUnitTest --tests "com.example.test.ui.editor.EntryEditorViewModelTest"`
 Expected: all 8 tests PASS
 
-- [ ] **Step 5: Add the FileProvider**
+- [ ] **Step 5: Update the Entry Editor screen**
 
-Create `app/src/main/res/xml/file_paths.xml`:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <files-path name="photos" path="photos/" />
-</paths>
-```
-
-In `app/src/main/AndroidManifest.xml`, add a `<uses-permission>` for the camera before `<application>`, and a `<provider>` inside `<application>`, after the closing `</activity>` tag:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <application
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Test">
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
-    </application>
-
-</manifest>
-```
-
-Note: `FilePhotoStorage` (Task 1) builds its `FileProvider` authority as `"${context.packageName}.fileprovider"` — `context.packageName` resolves to the same value the manifest's `${applicationId}` placeholder expands to at build time, so these match.
-
-- [ ] **Step 6: Update the Entry Editor screen**
+The `FileProvider` and camera permission were already set up in Task 1 (Step 7), since `FilePhotoStorageTest` needed them — nothing to add here.
 
 Replace the full contents of `app/src/main/java/com/example/test/ui/editor/EntryEditorScreen.kt`:
 
@@ -1046,7 +1051,7 @@ fun EntryEditorScreen(
 }
 ```
 
-- [ ] **Step 7: Thread PhotoStorage through the nav host**
+- [ ] **Step 6: Thread PhotoStorage through the nav host**
 
 Replace the full contents of `app/src/main/java/com/example/test/ui/MoodJournalNavHost.kt`:
 
@@ -1118,7 +1123,7 @@ fun MoodJournalNavHost(
 }
 ```
 
-- [ ] **Step 8: Construct FilePhotoStorage in MainActivity**
+- [ ] **Step 7: Construct FilePhotoStorage in MainActivity**
 
 Replace the full contents of `app/src/main/java/com/example/test/MainActivity.kt`:
 
@@ -1152,15 +1157,15 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
-- [ ] **Step 9: Install and manually verify**
+- [ ] **Step 8: Install and manually verify**
 
 Run: `./gradlew :app:installDebug`
 Expected: `BUILD SUCCESSFUL`. On the device: open an entry, tap "Add from gallery," pick an image, confirm it shows as a thumbnail with a remove (✕) button; tap "Take photo," confirm the camera permission prompt appears the first time, grant it, take a photo, confirm it replaces the thumbnail; tap the remove button, confirm the thumbnail disappears; save, reopen the entry, confirm the photo persisted. Tapping the thumbnail does nothing yet (`onViewPhoto` is a no-op until Task 4).
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add app/src/main/AndroidManifest.xml app/src/main/res/xml/file_paths.xml app/src/main/java/com/example/test/ui/editor app/src/test/java/com/example/test/ui/editor app/src/main/java/com/example/test/ui/MoodJournalNavHost.kt app/src/main/java/com/example/test/MainActivity.kt
+git add app/src/main/java/com/example/test/ui/editor app/src/test/java/com/example/test/ui/editor app/src/main/java/com/example/test/ui/MoodJournalNavHost.kt app/src/main/java/com/example/test/MainActivity.kt
 git commit -m "feat: add photo attach/replace/remove to the entry editor"
 ```
 
