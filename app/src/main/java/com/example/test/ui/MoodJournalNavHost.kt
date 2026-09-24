@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.test.repository.JournalRepository
+import com.example.test.repository.PhotoStorage
 import com.example.test.ui.editor.EntryEditorScreen
 import com.example.test.ui.list.EntryListScreen
 import com.example.test.ui.trend.MoodTrendScreen
@@ -24,6 +25,7 @@ object Routes {
 @Composable
 fun MoodJournalNavHost(
     repository: JournalRepository,
+    photoStorage: PhotoStorage,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Routes.ENTRY_LIST) {
@@ -47,8 +49,10 @@ fun MoodJournalNavHost(
             val entryId = backStackEntry.arguments?.getLong(Routes.ENTRY_EDITOR_ARG_ID) ?: 0L
             EntryEditorScreen(
                 repository = repository,
+                photoStorage = photoStorage,
                 entryId = entryId,
                 onDone = { navController.popBackStack(Routes.ENTRY_LIST, inclusive = false) },
+                onViewPhoto = {}, // wired to the real Photo Viewer route in Task 4
             )
         }
         composable(Routes.MOOD_TREND) {
