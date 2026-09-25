@@ -1,6 +1,7 @@
 package com.example.test.reminder
 
 import android.content.Context
+import androidx.core.content.edit
 
 private const val PREFS_NAME = "reminder_prefs"
 private const val KEY_ENABLED = "enabled"
@@ -18,10 +19,10 @@ class SharedPreferencesReminderPreferences(context: Context) : ReminderPreferenc
         prefs.getInt(KEY_HOUR, DEFAULT_HOUR) to prefs.getInt(KEY_MINUTE, DEFAULT_MINUTE)
 
     override fun setReminder(enabled: Boolean, hour: Int, minute: Int) {
-        prefs.edit()
-            .putBoolean(KEY_ENABLED, enabled)
-            .putInt(KEY_HOUR, hour)
-            .putInt(KEY_MINUTE, minute)
-            .apply()
+        prefs.edit {
+            putBoolean(KEY_ENABLED, enabled)
+            putInt(KEY_HOUR, hour)
+            putInt(KEY_MINUTE, minute)
+        }
     }
 }

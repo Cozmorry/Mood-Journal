@@ -1,9 +1,12 @@
 package com.example.test.reminder
 
+import android.Manifest
 import android.content.Context
+import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.example.test.data.AppDatabase
@@ -20,6 +23,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Calendar
 
+/**
+ * WARNING: this test deletes today's journal entries from whatever database it runs
+ * against — `AppDatabase.getInstance(applicationContext)` is the real, on-device
+ * database, not an isolated in-memory one (see the design doc's Architecture section
+ * for why `ReminderWorker` doesn't take an injectable repository). Only ever
+ * run `connectedAndroidTest`/this test against a clean, disposable emulator — never a
+ * personal device with real journal data.
+ */
 @RunWith(AndroidJUnit4::class)
 class ReminderWorkerTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
@@ -35,6 +46,22 @@ class ReminderWorkerTest {
 
     private suspend fun deleteTodaysEntries() {
         dao.getSince(startOfTodayMillis()).first().forEach { dao.delete(it) }
+    }
+
+    // Without this, POST_NOTIFICATIONS isn't granted on a fresh API 33+ emulator/device,
+    // so ReminderWorker's own permission guard silently no-ops postNotification() and
+    // both tests below stop exercising the real notification-posting path: the "posts"
+    // test fails loudly, but the "skips" test can't distinguish a correctly-skipped
+    // notification from one that was simply never allowed to post, regardless of the
+    // skip logic actually being exercised. Granting it here makes both deterministic.
+    @Before
+    fun grantNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
+                context.packageName,
+                Manifest.permission.POST_NOTIFICATIONS,
+            )
+        }
     }
 
     @Before

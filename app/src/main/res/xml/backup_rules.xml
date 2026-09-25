@@ -10,4 +10,8 @@
    <include domain="sharedpref" path="."/>
    <exclude domain="sharedpref" path="device.xml"/>
 -->
+    <!-- The reminder's on/off + time is meaningless without the WorkManager schedule
+         (lives in noBackupFilesDir, never backed up) and the POST_NOTIFICATIONS grant
+         (never transfers on restore), both of which restoring alone can't recreate. -->
+    <exclude domain="sharedpref" path="reminder_prefs.xml"/>
 </full-backup-content>

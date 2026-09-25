@@ -89,16 +89,25 @@ interface ReminderScheduler {
   ```kotlin
   WorkManager.getInstance(context).enqueueUniquePeriodicWork(
       REMINDER_WORK_NAME,
-      ExistingPeriodicWorkPolicy.UPDATE,
+      ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
       PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)
           .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
           .build(),
   )
   ```
 
-  `ExistingPeriodicWorkPolicy.UPDATE` means changing the time while the
-  reminder is already on just re-enqueues with a new initial delay — no
-  separate cancel step needed.
+  `ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE` cancels any existing
+  periodic work registered under `REMINDER_WORK_NAME` and enqueues the new
+  request fresh. This is what makes changing the time while the reminder is
+  already on actually take effect: `ExistingPeriodicWorkPolicy.UPDATE` would
+  look like the simpler choice, but it carries over the *existing* work's
+  `lastEnqueueTime`/period count rather than starting over, so the new
+  initial delay computed by `schedule()` would silently have no effect on
+  the already-fired case (and would compute the wrong delay in the
+  not-yet-fired case). `CANCEL_AND_REENQUEUE` avoids both problems at the
+  cost of a genuine cancel-then-enqueue on every call, which is the correct
+  tradeoff here since `schedule()` is only called when the user actually
+  changes something.
 - `cancel()` calls `WorkManager.getInstance(context).cancelUniqueWork(REMINDER_WORK_NAME)`.
 - WorkManager persists enqueued periodic work across device reboots on its
   own; no `BOOT_COMPLETED` receiver needed.

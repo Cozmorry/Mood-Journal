@@ -9,11 +9,14 @@
         <include .../>
         <exclude .../>
         -->
+        <!-- The reminder's on/off + time is meaningless without the WorkManager schedule
+             (lives in noBackupFilesDir, never backed up) and the POST_NOTIFICATIONS grant
+             (never transfers on restore), both of which restoring alone can't recreate. -->
+        <exclude domain="sharedpref" path="reminder_prefs.xml"/>
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!-- Same reasoning as the cloud-backup exclude above: device-to-device transfer
+             is a separate mechanism and defaults to transferring everything too. -->
+        <exclude domain="sharedpref" path="reminder_prefs.xml"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

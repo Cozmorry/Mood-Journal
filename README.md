@@ -83,7 +83,7 @@ fixed at compile time:
 
 ## Screens & navigation
 
-Compose Navigation with three destinations:
+Compose Navigation with five destinations:
 
 1. **Entry List** (start destination) — reverse-chronological list of
    entries; each row shows date, mood emoji/color, a text preview, and a

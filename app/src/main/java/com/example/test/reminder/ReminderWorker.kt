@@ -82,7 +82,7 @@ class ReminderWorker(
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_reminder)
             .setContentTitle("Mood Journal")
             .setContentText("How are you feeling today?")
             .setContentIntent(pendingIntent)

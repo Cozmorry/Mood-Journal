@@ -16,7 +16,7 @@ class WorkManagerReminderScheduler(private val context: Context) : ReminderSched
             .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             REMINDER_WORK_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             request,
         )
     }
