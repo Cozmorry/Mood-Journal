@@ -40,10 +40,14 @@ server component. All data is stored locally on the device using Room.
 - Reverse-chronological list of all entries
 - A mood-over-time chart summarizing recent entries
 
-**Explicitly out of scope for v1** (each is a candidate fast-follow, to be
+**Shipped as a fast-follow:**
+
+- Photo attachments — one photo per entry, from the gallery or camera, with
+  a full-screen viewer
+
+**Explicitly out of scope for now** (each is a candidate fast-follow, to be
 designed separately when picked up):
 
-- Photo attachments on entries
 - Search/filter by text, mood, or date range
 - Daily reminder notifications
 
@@ -74,21 +78,26 @@ fixed at compile time:
 | `text`      | `String`                                 | must be non-blank to save                    |
 | `mood`      | enum: `GREAT, GOOD, OKAY, BAD, AWFUL`    | stored via a Room `TypeConverter`             |
 | `intensity` | `Int` (1–5)                              | how strongly the mood is felt                |
+| `photoPath` | `String?`                                | bare filename under the app's photos dir; `null` = no photo |
 
 ## Screens & navigation
 
 Compose Navigation with three destinations:
 
 1. **Entry List** (start destination) — reverse-chronological list of
-   entries; each row shows date, mood emoji/color, and a text preview. A FAB
-   opens the Entry Editor in "new" mode; tapping a row opens it in "edit"
-   mode. A top-bar icon navigates to Mood Trend.
+   entries; each row shows date, mood emoji/color, a text preview, and a
+   photo thumbnail when the entry has one. A FAB opens the Entry Editor in
+   "new" mode; tapping a row opens it in "edit" mode; tapping a thumbnail
+   opens the Photo Viewer directly. A top-bar icon navigates to Mood Trend.
 2. **Entry Editor** — multiline text field, a row of five mood options
-   (emoji/color + label), and an intensity slider (1–5). Save is disabled
+   (emoji/color + label), an intensity slider (1–5), and an optional photo
+   (add from the gallery or camera, replace, or remove). Save is disabled
    while the text is blank. Delete is available only in edit mode.
 3. **Mood Trend** — a Canvas-drawn line/dot chart plotting mood + intensity
    over the last 30 days. No charting library is used; Compose `Canvas` is
    enough for a single trend line.
+4. **Photo Viewer** — a full-screen view of an entry's photo, reachable from
+   either the list thumbnail or the editor's photo preview.
 
 ## Tech stack
 
@@ -96,6 +105,7 @@ Compose Navigation with three destinations:
 - Jetpack Compose + Material 3 (not yet added to the project)
 - Room, with Kotlin coroutines/Flow for reactive queries
 - Navigation-Compose
+- Coil, for loading photo attachments
 - ViewModel + StateFlow for UI state
 - `minSdk` 24 / `compileSdk` 37 / `targetSdk` 37
 
@@ -181,9 +191,11 @@ check with `adb devices` first):
 
 ## Roadmap
 
-Post-MVP phases, each to get its own design pass when picked up:
+Photo attachments shipped — see
+[Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md).
 
-- Photo attachments (storage, permissions, display in list/editor)
+Remaining post-MVP phases, each to get its own design pass when picked up:
+
 - Search/filter (query design, possibly full-text search if needed)
 - Daily reminder notification (WorkManager/AlarmManager, Android 13+
   notification permission, user-configurable time)
@@ -196,6 +208,9 @@ Full design and implementation detail lives under `docs/superpowers/`:
   purpose, scope, architecture, data model, and error-handling decisions.
 - [Implementation plan](docs/superpowers/plans/2026-09-15-mood-journal-mvp.md) —
   the task-by-task build plan derived from the spec.
+- [Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md)
+  and [implementation plan](docs/superpowers/plans/2026-09-24-photo-attachments.md) —
+  the first post-MVP fast-follow phase.
 
 ## Contributing
 
