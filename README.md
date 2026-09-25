@@ -44,12 +44,13 @@ server component. All data is stored locally on the device using Room.
 
 - Photo attachments — one photo per entry, from the gallery or camera, with
   a full-screen viewer
+- Daily reminder notification — a user-configurable time, skipped on days
+  already journaled, tapping it opens a new entry directly
 
 **Explicitly out of scope for now** (each is a candidate fast-follow, to be
 designed separately when picked up):
 
 - Search/filter by text, mood, or date range
-- Daily reminder notifications
 
 ## Architecture
 
@@ -98,6 +99,10 @@ Compose Navigation with three destinations:
    enough for a single trend line.
 4. **Photo Viewer** — a full-screen view of an entry's photo, reachable from
    either the list thumbnail or the editor's photo preview.
+5. **Settings** — a "Daily reminder" toggle and time picker, reachable via a
+   gear icon in the Entry List's top bar. Turning it on schedules a daily
+   notification (skipped on days already journaled) at the chosen time;
+   tapping the notification opens a new entry directly.
 
 ## Tech stack
 
@@ -106,6 +111,7 @@ Compose Navigation with three destinations:
 - Room, with Kotlin coroutines/Flow for reactive queries
 - Navigation-Compose
 - Coil, for loading photo attachments
+- WorkManager, for the daily reminder notification
 - ViewModel + StateFlow for UI state
 - `minSdk` 24 / `compileSdk` 37 / `targetSdk` 37
 
@@ -191,14 +197,13 @@ check with `adb devices` first):
 
 ## Roadmap
 
-Photo attachments shipped — see
-[Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md).
+Photo attachments and the daily reminder notification have shipped — see
+[Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md)
+and [Daily reminder design](docs/superpowers/specs/2026-09-25-daily-reminder-design.md).
 
 Remaining post-MVP phases, each to get its own design pass when picked up:
 
 - Search/filter (query design, possibly full-text search if needed)
-- Daily reminder notification (WorkManager/AlarmManager, Android 13+
-  notification permission, user-configurable time)
 
 ## Documentation
 
@@ -211,6 +216,9 @@ Full design and implementation detail lives under `docs/superpowers/`:
 - [Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md)
   and [implementation plan](docs/superpowers/plans/2026-09-24-photo-attachments.md) —
   the first post-MVP fast-follow phase.
+- [Daily reminder design](docs/superpowers/specs/2026-09-25-daily-reminder-design.md)
+  and [implementation plan](docs/superpowers/plans/2026-09-25-daily-reminder.md) —
+  the second post-MVP fast-follow phase.
 
 ## Contributing
 
