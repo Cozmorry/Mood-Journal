@@ -1,6 +1,11 @@
 package com.example.test.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,10 +41,18 @@ fun MoodJournalNavHost(
     photoStorage: PhotoStorage,
     reminderPreferences: ReminderPreferences,
     reminderScheduler: ReminderScheduler,
+    startAtNewEntry: Boolean = false,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Routes.ENTRY_LIST) {
         composable(Routes.ENTRY_LIST) {
+            var hasHandledStartAtNewEntry by rememberSaveable { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                if (startAtNewEntry && !hasHandledStartAtNewEntry) {
+                    hasHandledStartAtNewEntry = true
+                    navController.navigate(Routes.ENTRY_EDITOR_NEW)
+                }
+            }
             EntryListScreen(
                 repository = repository,
                 photoStorage = photoStorage,

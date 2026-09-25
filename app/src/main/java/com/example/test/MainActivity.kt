@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.test.data.AppDatabase
+import com.example.test.reminder.EXTRA_OPEN_NEW_ENTRY
 import com.example.test.reminder.SharedPreferencesReminderPreferences
 import com.example.test.reminder.WorkManagerReminderScheduler
 import com.example.test.repository.FilePhotoStorage
@@ -22,6 +23,7 @@ class MainActivity : ComponentActivity() {
         val photoStorage = FilePhotoStorage(applicationContext)
         val reminderPreferences = SharedPreferencesReminderPreferences(applicationContext)
         val reminderScheduler = WorkManagerReminderScheduler(applicationContext)
+        val startAtNewEntry = intent?.getBooleanExtra(EXTRA_OPEN_NEW_ENTRY, false) ?: false
         setContent {
             MoodJournalTheme {
                 MoodJournalNavHost(
@@ -29,6 +31,7 @@ class MainActivity : ComponentActivity() {
                     photoStorage = photoStorage,
                     reminderPreferences = reminderPreferences,
                     reminderScheduler = reminderScheduler,
+                    startAtNewEntry = startAtNewEntry,
                 )
             }
         }
