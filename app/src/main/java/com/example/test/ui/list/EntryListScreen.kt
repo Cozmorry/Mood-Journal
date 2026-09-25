@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -45,6 +46,7 @@ fun EntryListScreen(
     onAddEntry: () -> Unit,
     onEntryClick: (Long) -> Unit,
     onShowTrend: () -> Unit,
+    onShowSettings: () -> Unit,
     onPhotoClick: (String) -> Unit,
     viewModel: EntryListViewModel = viewModel(
         factory = viewModelFactory { initializer { EntryListViewModel(repository) } },
@@ -59,6 +61,9 @@ fun EntryListScreen(
                 actions = {
                     IconButton(onClick = onShowTrend) {
                         Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = "Mood trend")
+                    }
+                    IconButton(onClick = onShowSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 },
             )

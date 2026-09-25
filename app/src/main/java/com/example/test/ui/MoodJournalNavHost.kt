@@ -7,10 +7,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.test.reminder.ReminderPreferences
+import com.example.test.reminder.ReminderScheduler
 import com.example.test.repository.JournalRepository
 import com.example.test.repository.PhotoStorage
 import com.example.test.ui.editor.EntryEditorScreen
 import com.example.test.ui.list.EntryListScreen
+import com.example.test.ui.settings.SettingsScreen
 import com.example.test.ui.trend.MoodTrendScreen
 import com.example.test.ui.viewer.PhotoViewerScreen
 
@@ -22,6 +25,7 @@ object Routes {
     const val MOOD_TREND = "moodTrend"
     const val PHOTO_VIEWER = "photoViewer"
     const val PHOTO_VIEWER_ARG_PATH = "photoPath"
+    const val SETTINGS = "settings"
     fun entryEditorEdit(id: Long) = "$ENTRY_EDITOR?$ENTRY_EDITOR_ARG_ID=$id"
     fun photoViewer(photoPath: String) = "$PHOTO_VIEWER/$photoPath"
 }
@@ -30,6 +34,8 @@ object Routes {
 fun MoodJournalNavHost(
     repository: JournalRepository,
     photoStorage: PhotoStorage,
+    reminderPreferences: ReminderPreferences,
+    reminderScheduler: ReminderScheduler,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Routes.ENTRY_LIST) {
@@ -40,6 +46,7 @@ fun MoodJournalNavHost(
                 onAddEntry = { navController.navigate(Routes.ENTRY_EDITOR_NEW) },
                 onEntryClick = { id -> navController.navigate(Routes.entryEditorEdit(id)) },
                 onShowTrend = { navController.navigate(Routes.MOOD_TREND) },
+                onShowSettings = { navController.navigate(Routes.SETTINGS) },
                 onPhotoClick = { path -> navController.navigate(Routes.photoViewer(path)) },
             )
         }
@@ -75,6 +82,13 @@ fun MoodJournalNavHost(
             PhotoViewerScreen(
                 photoStorage = photoStorage,
                 photoPath = photoPath,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                reminderPreferences = reminderPreferences,
+                reminderScheduler = reminderScheduler,
                 onBack = { navController.popBackStack() },
             )
         }

@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.test.data.AppDatabase
+import com.example.test.reminder.SharedPreferencesReminderPreferences
+import com.example.test.reminder.WorkManagerReminderScheduler
 import com.example.test.repository.FilePhotoStorage
 import com.example.test.repository.RoomJournalRepository
 import com.example.test.ui.MoodJournalNavHost
@@ -18,9 +20,16 @@ class MainActivity : ComponentActivity() {
             AppDatabase.getInstance(applicationContext).journalEntryDao(),
         )
         val photoStorage = FilePhotoStorage(applicationContext)
+        val reminderPreferences = SharedPreferencesReminderPreferences(applicationContext)
+        val reminderScheduler = WorkManagerReminderScheduler(applicationContext)
         setContent {
             MoodJournalTheme {
-                MoodJournalNavHost(repository = repository, photoStorage = photoStorage)
+                MoodJournalNavHost(
+                    repository = repository,
+                    photoStorage = photoStorage,
+                    reminderPreferences = reminderPreferences,
+                    reminderScheduler = reminderScheduler,
+                )
             }
         }
     }
