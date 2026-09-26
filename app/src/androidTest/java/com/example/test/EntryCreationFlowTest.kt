@@ -14,14 +14,18 @@ class EntryCreationFlowTest {
 
     @Test
     fun creatingEntry_showsItInList() {
-        // Unique text avoids collisions with entries left over from earlier test runs
+        // Unique text/tag avoids collisions with entries left over from earlier test runs
         // in the app's real on-device database (this test doesn't use an isolated DB).
-        val entryText = "Had a great walk today ${System.currentTimeMillis()}"
+        val timestamp = System.currentTimeMillis()
+        val entryText = "Had a great walk today $timestamp"
+        val uniqueTag = "tag$timestamp"
 
         composeRule.onNodeWithContentDescription("New entry").performClick()
         composeRule.onNodeWithText("What's on your mind?").performTextInput(entryText)
+        composeRule.onNodeWithText("Add a tag").performTextInput("$uniqueTag,")
         composeRule.onNodeWithText("Save").performClick()
 
         composeRule.onNodeWithText(entryText).assertExists()
+        composeRule.onNodeWithText("#$uniqueTag").assertExists()
     }
 }
