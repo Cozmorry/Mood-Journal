@@ -18,3 +18,6 @@ class Converters {
 
 internal fun splitTags(raw: String): List<String> =
     if (raw.isBlank()) emptyList() else raw.split(",").map { it.trim() }.filter { it.isNotBlank() }
+
+internal fun aggregateDistinctTags(perEntryTags: List<List<String>>): List<String> =
+    perEntryTags.flatten().distinct().sorted()

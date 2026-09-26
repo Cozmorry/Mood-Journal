@@ -18,6 +18,9 @@ interface JournalEntryDao {
     @Query("SELECT * FROM journal_entries WHERE id = :id")
     suspend fun getById(id: Long): JournalEntry?
 
+    @Query("SELECT tags FROM journal_entries")
+    fun getAllTagsRaw(): Flow<List<String>>
+
     @Insert
     suspend fun insert(entry: JournalEntry): Long
 

@@ -42,4 +42,21 @@ class ConvertersTest {
         val roundTripped = converters.stringToTags(converters.tagsToString(original))
         assertEquals(original, roundTripped)
     }
+
+    @Test
+    fun aggregateDistinctTags_flattensDedupesAndSorts() {
+        val result = aggregateDistinctTags(listOf(listOf("work", "stressed"), listOf("stressed", "family")))
+        assertEquals(listOf("family", "stressed", "work"), result)
+    }
+
+    @Test
+    fun aggregateDistinctTags_emptyInput_producesEmptyList() {
+        assertEquals(emptyList<String>(), aggregateDistinctTags(emptyList()))
+    }
+
+    @Test
+    fun aggregateDistinctTags_entriesWithNoTags_areIgnored() {
+        val result = aggregateDistinctTags(listOf(emptyList(), listOf("work"), emptyList()))
+        assertEquals(listOf("work"), result)
+    }
 }

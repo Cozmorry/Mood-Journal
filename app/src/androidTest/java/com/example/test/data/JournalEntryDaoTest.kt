@@ -75,4 +75,23 @@ class JournalEntryDaoTest {
 
         assertEquals(listOf("Recent"), entries.map { it.text })
     }
+
+    @Test
+    fun getAllTagsRaw_returnsRawTagColumnFromEveryEntry() = runBlocking {
+        dao.insert(
+            JournalEntry(
+                createdAt = 1L,
+                updatedAt = 1L,
+                text = "First",
+                mood = Mood.OKAY,
+                intensity = 3,
+                tags = listOf("work", "stressed"),
+            ),
+        )
+        dao.insert(JournalEntry(createdAt = 2L, updatedAt = 2L, text = "Second", mood = Mood.GOOD, intensity = 4))
+
+        val rawTags = dao.getAllTagsRaw().first()
+
+        assertEquals(setOf("work,stressed", ""), rawTags.toSet())
+    }
 }

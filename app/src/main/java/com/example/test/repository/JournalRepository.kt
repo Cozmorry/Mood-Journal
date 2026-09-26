@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface JournalRepository {
     fun getAll(): Flow<List<JournalEntry>>
     fun getSince(sinceEpochMillis: Long): Flow<List<JournalEntry>>
+    fun getAllTags(): Flow<List<String>>
     suspend fun getById(id: Long): JournalEntry?
     suspend fun save(entry: JournalEntry): Long
     suspend fun delete(entry: JournalEntry)

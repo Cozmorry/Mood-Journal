@@ -1,6 +1,7 @@
 package com.example.test.repository
 
 import com.example.test.data.JournalEntry
+import com.example.test.data.aggregateDistinctTags
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,9 @@ class FakeJournalRepository : JournalRepository {
         MutableStateFlow(
             entriesFlow.value.filter { it.createdAt >= sinceEpochMillis }.sortedBy(JournalEntry::createdAt),
         ).asStateFlow()
+
+    override fun getAllTags(): Flow<List<String>> =
+        entriesFlow.map { entries -> aggregateDistinctTags(entries.map { it.tags }) }
 
     override suspend fun getById(id: Long): JournalEntry? =
         entriesFlow.value.find { it.id == id }
