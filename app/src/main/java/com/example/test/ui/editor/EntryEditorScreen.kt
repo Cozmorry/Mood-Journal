@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -18,6 +20,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,12 +33,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,7 +71,7 @@ import com.example.test.repository.JournalRepository
 import com.example.test.repository.PhotoStorage
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EntryEditorScreen(
     repository: JournalRepository,
@@ -77,6 +84,12 @@ fun EntryEditorScreen(
     ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val tagSuggestions by viewModel.existingTagSuggestions.collectAsStateWithLifecycle()
+    val filteredTagSuggestions = remember(uiState.tagInput, tagSuggestions, uiState.tags) {
+        tagSuggestions
+            .filter { it.contains(uiState.tagInput, ignoreCase = true) && it !in uiState.tags }
+            .take(5)
+    }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -265,6 +278,56 @@ fun EntryEditorScreen(
                 valueRange = 1f..5f,
                 steps = 3,
             )
+            OutlinedTextField(
+                value = uiState.tagInput,
+                onValueChange = { newValue ->
+                    if (newValue.contains(",")) {
+                        viewModel.onTagCommitted(newValue.substringBefore(","))
+                        viewModel.onTagInputChange(newValue.substringAfter(","))
+                    } else {
+                        viewModel.onTagInputChange(newValue)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                label = { Text("Add a tag") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { viewModel.onTagCommitted(uiState.tagInput) }),
+            )
+            if (uiState.tags.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    uiState.tags.forEach { tag ->
+                        InputChip(
+                            selected = false,
+                            onClick = { viewModel.onTagRemoved(tag) },
+                            label = { Text(tag) },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = "Remove tag $tag",
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            if (filteredTagSuggestions.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    filteredTagSuggestions.forEach { suggestion ->
+                        SuggestionChip(
+                            onClick = { viewModel.onTagCommitted(suggestion) },
+                            label = { Text(suggestion) },
+                        )
+                    }
+                }
+            }
             Button(
                 onClick = viewModel::save,
                 enabled = uiState.isSaveEnabled,
