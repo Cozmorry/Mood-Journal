@@ -5,6 +5,10 @@ import com.example.test.data.JournalEntry
 import com.example.test.data.Mood
 import com.example.test.repository.FakeJournalRepository
 import com.example.test.repository.FakePhotoStorage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -13,6 +17,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class EntryEditorViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -133,5 +138,81 @@ class EntryEditorViewModelTest {
         viewModel.delete()
 
         assertEquals(listOf("photo_1.jpg"), photoStorage.deletedPaths)
+    }
+
+    @Test
+    fun onTagCommitted_addsTagAndClearsInput() = runTest {
+        val viewModel = EntryEditorViewModel(FakeJournalRepository(), FakePhotoStorage(), entryId = 0L)
+
+        viewModel.onTagInputChange("work")
+        viewModel.onTagCommitted("work")
+
+        assertEquals(listOf("work"), viewModel.uiState.value.tags)
+        assertEquals("", viewModel.uiState.value.tagInput)
+    }
+
+    @Test
+    fun onTagCommitted_blankInput_isIgnored() = runTest {
+        val viewModel = EntryEditorViewModel(FakeJournalRepository(), FakePhotoStorage(), entryId = 0L)
+
+        viewModel.onTagCommitted("   ")
+
+        assertTrue(viewModel.uiState.value.tags.isEmpty())
+    }
+
+    @Test
+    fun onTagCommitted_duplicateOnSameEntry_isIgnored() = runTest {
+        val viewModel = EntryEditorViewModel(FakeJournalRepository(), FakePhotoStorage(), entryId = 0L)
+        viewModel.onTagCommitted("work")
+
+        viewModel.onTagCommitted("work")
+
+        assertEquals(listOf("work"), viewModel.uiState.value.tags)
+    }
+
+    @Test
+    fun onTagRemoved_removesTagFromState() = runTest {
+        val viewModel = EntryEditorViewModel(FakeJournalRepository(), FakePhotoStorage(), entryId = 0L)
+        viewModel.onTagCommitted("work")
+        viewModel.onTagCommitted("stressed")
+
+        viewModel.onTagRemoved("work")
+
+        assertEquals(listOf("stressed"), viewModel.uiState.value.tags)
+    }
+
+    @Test
+    fun save_persistsTagsToRepository() = runTest {
+        val repository = FakeJournalRepository()
+        val viewModel = EntryEditorViewModel(repository, FakePhotoStorage(), entryId = 0L)
+
+        viewModel.onTextChange("Busy day")
+        viewModel.onTagCommitted("work")
+        viewModel.onTagCommitted("stressed")
+        viewModel.save()
+
+        assertEquals(listOf("work", "stressed"), repository.currentEntries[0].tags)
+    }
+
+    @Test
+    fun existingTagSuggestions_reflectsTagsFromOtherEntries() = runTest {
+        val repository = FakeJournalRepository()
+        repository.save(
+            JournalEntry(
+                createdAt = 1L,
+                updatedAt = 1L,
+                text = "Old",
+                mood = Mood.OKAY,
+                intensity = 3,
+                tags = listOf("work", "family"),
+            ),
+        )
+        val viewModel = EntryEditorViewModel(repository, FakePhotoStorage(), entryId = 0L)
+
+        val collectJob = launch(UnconfinedTestDispatcher()) { viewModel.existingTagSuggestions.collect() }
+
+        assertEquals(listOf("family", "work"), viewModel.existingTagSuggestions.value)
+
+        collectJob.cancel()
     }
 }

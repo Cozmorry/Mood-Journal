@@ -7,8 +7,10 @@ import com.example.test.data.Mood
 import com.example.test.repository.JournalRepository
 import com.example.test.repository.PhotoStorage
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class EntryEditorUiState(
@@ -18,6 +20,8 @@ data class EntryEditorUiState(
     val mood: Mood = Mood.OKAY,
     val intensity: Int = 3,
     val photoPath: String? = null,
+    val tags: List<String> = emptyList(),
+    val tagInput: String = "",
     val isExistingEntry: Boolean = false,
     val isSaved: Boolean = false,
 ) {
@@ -31,6 +35,9 @@ class EntryEditorViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EntryEditorUiState(entryId = entryId))
     val uiState: StateFlow<EntryEditorUiState> = _uiState.asStateFlow()
+
+    val existingTagSuggestions: StateFlow<List<String>> = repository.getAllTags()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private var saveInFlight = false
     private var persistedPhotoPath: String? = null
@@ -47,6 +54,7 @@ class EntryEditorViewModel(
                         mood = entry.mood,
                         intensity = entry.intensity,
                         photoPath = entry.photoPath,
+                        tags = entry.tags,
                         isExistingEntry = true,
                     )
                 }
@@ -74,6 +82,24 @@ class EntryEditorViewModel(
         _uiState.value = _uiState.value.copy(photoPath = null)
     }
 
+    fun onTagInputChange(text: String) {
+        _uiState.value = _uiState.value.copy(tagInput = text)
+    }
+
+    fun onTagCommitted(tag: String) {
+        val trimmed = tag.trim()
+        val state = _uiState.value
+        if (trimmed.isBlank() || state.tags.contains(trimmed)) {
+            _uiState.value = state.copy(tagInput = "")
+            return
+        }
+        _uiState.value = state.copy(tags = state.tags + trimmed, tagInput = "")
+    }
+
+    fun onTagRemoved(tag: String) {
+        _uiState.value = _uiState.value.copy(tags = _uiState.value.tags.filterNot { it == tag })
+    }
+
     fun save() {
         val state = _uiState.value
         if (!state.isSaveEnabled || saveInFlight) return
@@ -89,6 +115,7 @@ class EntryEditorViewModel(
                     mood = state.mood,
                     intensity = state.intensity,
                     photoPath = state.photoPath,
+                    tags = state.tags,
                 ),
             )
             val previousPhotoPath = persistedPhotoPath
@@ -113,6 +140,7 @@ class EntryEditorViewModel(
                     mood = state.mood,
                     intensity = state.intensity,
                     photoPath = state.photoPath,
+                    tags = state.tags,
                 ),
             )
             persistedPhotoPath?.let { photoStorage.delete(it) }
