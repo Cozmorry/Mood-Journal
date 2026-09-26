@@ -46,6 +46,9 @@ server component. All data is stored locally on the device using Room.
   a full-screen viewer
 - Daily reminder notification — a user-configurable time, skipped on days
   already journaled, tapping it opens a new entry directly
+- Tags/categories — freeform tags per entry, created on the fly with
+  autocomplete from previously-used tags; no management screen, no
+  filtering yet
 
 **Explicitly out of scope for now** (each is a candidate fast-follow, to be
 designed separately when picked up):
@@ -80,20 +83,24 @@ fixed at compile time:
 | `mood`      | enum: `GREAT, GOOD, OKAY, BAD, AWFUL`    | stored via a Room `TypeConverter`             |
 | `intensity` | `Int` (1–5)                              | how strongly the mood is felt                |
 | `photoPath` | `String?`                                | bare filename under the app's photos dir; `null` = no photo |
+| `tags`      | `List<String>`                           | freeform tags, stored as a comma-joined `TEXT` column via a `Converters` `TypeConverter`; `[]` = no tags |
 
 ## Screens & navigation
 
 Compose Navigation with five destinations:
 
 1. **Entry List** (start destination) — reverse-chronological list of
-   entries; each row shows date, mood emoji/color, a text preview, and a
-   photo thumbnail when the entry has one. A FAB opens the Entry Editor in
-   "new" mode; tapping a row opens it in "edit" mode; tapping a thumbnail
-   opens the Photo Viewer directly. A top-bar icon navigates to Mood Trend.
+   entries; each row shows date, mood emoji/color, a text preview, up to 3
+   tag chips, and a photo thumbnail when the entry has one. A FAB opens the
+   Entry Editor in "new" mode; tapping a row opens it in "edit" mode;
+   tapping a thumbnail opens the Photo Viewer directly. A top-bar icon
+   navigates to Mood Trend.
 2. **Entry Editor** — multiline text field, a row of five mood options
-   (emoji/color + label), an intensity slider (1–5), and an optional photo
-   (add from the gallery or camera, replace, or remove). Save is disabled
-   while the text is blank. Delete is available only in edit mode.
+   (emoji/color + label), an intensity slider (1–5), an optional photo
+   (add from the gallery or camera, replace, or remove), and a freeform tag
+   input (comma/Enter to commit a chip, tap a chip to remove it, with
+   autocomplete suggestions drawn from tags used on other entries). Save is
+   disabled while the text is blank. Delete is available only in edit mode.
 3. **Mood Trend** — a Canvas-drawn line/dot chart plotting mood + intensity
    over the last 30 days. No charting library is used; Compose `Canvas` is
    enough for a single trend line.
@@ -197,9 +204,11 @@ check with `adb devices` first):
 
 ## Roadmap
 
-Photo attachments and the daily reminder notification have shipped — see
-[Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md)
-and [Daily reminder design](docs/superpowers/specs/2026-09-25-daily-reminder-design.md).
+Photo attachments, the daily reminder notification, and tags/categories
+have shipped — see
+[Photo attachments design](docs/superpowers/specs/2026-09-24-photo-attachments-design.md),
+[Daily reminder design](docs/superpowers/specs/2026-09-25-daily-reminder-design.md),
+and [Tags design](docs/superpowers/specs/2026-09-26-tags-design.md).
 
 Remaining post-MVP phases, each to get its own design pass when picked up:
 
@@ -219,6 +228,9 @@ Full design and implementation detail lives under `docs/superpowers/`:
 - [Daily reminder design](docs/superpowers/specs/2026-09-25-daily-reminder-design.md)
   and [implementation plan](docs/superpowers/plans/2026-09-25-daily-reminder.md) —
   the second post-MVP fast-follow phase.
+- [Tags design](docs/superpowers/specs/2026-09-26-tags-design.md)
+  and [implementation plan](docs/superpowers/plans/2026-09-26-tags.md) —
+  the third post-MVP fast-follow phase.
 
 ## Contributing
 
