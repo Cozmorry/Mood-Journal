@@ -12,4 +12,5 @@ data class JournalEntry(
     val mood: Mood,
     val intensity: Int,
     val photoPath: String? = null,
+    val tags: List<String> = emptyList(),
 )

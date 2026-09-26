@@ -42,7 +42,7 @@ class AppDatabaseMigrationTest {
         v1Database.close()
 
         val migrated = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .build()
         database = migrated
 
@@ -52,5 +52,33 @@ class AppDatabaseMigrationTest {
         assertEquals("Pre-migration entry", entries[0].text)
         assertEquals(Mood.OKAY, entries[0].mood)
         assertNull(entries[0].photoPath)
+    }
+
+    @Test
+    fun migrate2To3_preservesExistingRowsAndAddsEmptyTags() = runBlocking {
+        context.deleteDatabase(dbName)
+        val v2Database = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(dbName), null)
+        v2Database.execSQL(
+            "CREATE TABLE journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, text TEXT NOT NULL, " +
+                "mood TEXT NOT NULL, intensity INTEGER NOT NULL, photoPath TEXT)",
+        )
+        v2Database.execSQL(
+            "INSERT INTO journal_entries (createdAt, updatedAt, text, mood, intensity, photoPath) " +
+                "VALUES (1, 1, 'Pre-migration entry', 'OKAY', 3, NULL)",
+        )
+        v2Database.version = 2
+        v2Database.close()
+
+        val migrated = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+            .build()
+        database = migrated
+
+        val entries = migrated.journalEntryDao().getAll().first()
+
+        assertEquals(1, entries.size)
+        assertEquals("Pre-migration entry", entries[0].text)
+        assertEquals(emptyList<String>(), entries[0].tags)
     }
 }
