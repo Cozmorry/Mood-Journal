@@ -1,6 +1,8 @@
 package com.example.test.ui.list
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,6 +18,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -79,7 +82,25 @@ fun EntryListScreen(
             items(entries, key = { it.id }) { entry ->
                 ListItem(
                     headlineContent = { Text(entry.text.take(60)) },
-                    supportingContent = { Text(dateFormat.format(Date(entry.createdAt))) },
+                    supportingContent = {
+                        Column {
+                            Text(dateFormat.format(Date(entry.createdAt)))
+                            if (entry.tags.isNotEmpty()) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(top = 2.dp),
+                                ) {
+                                    entry.tags.take(3).forEach { tag ->
+                                        Text(
+                                            text = "#$tag",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    },
                     leadingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val photoPath = entry.photoPath
