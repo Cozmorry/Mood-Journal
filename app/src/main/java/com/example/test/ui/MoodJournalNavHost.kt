@@ -16,6 +16,8 @@ import com.example.test.reminder.ReminderPreferences
 import com.example.test.reminder.ReminderScheduler
 import com.example.test.repository.JournalRepository
 import com.example.test.repository.PhotoStorage
+import com.example.test.security.AppLockPreferences
+import com.example.test.security.BiometricAuthenticator
 import com.example.test.ui.editor.EntryEditorScreen
 import com.example.test.ui.list.EntryListScreen
 import com.example.test.ui.settings.SettingsScreen
@@ -41,6 +43,8 @@ fun MoodJournalNavHost(
     photoStorage: PhotoStorage,
     reminderPreferences: ReminderPreferences,
     reminderScheduler: ReminderScheduler,
+    appLockPreferences: AppLockPreferences,
+    biometricAuthenticator: BiometricAuthenticator,
     startAtNewEntry: Boolean = false,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -102,6 +106,8 @@ fun MoodJournalNavHost(
             SettingsScreen(
                 reminderPreferences = reminderPreferences,
                 reminderScheduler = reminderScheduler,
+                appLockPreferences = appLockPreferences,
+                biometricAuthenticator = biometricAuthenticator,
                 onBack = { navController.popBackStack() },
             )
         }
