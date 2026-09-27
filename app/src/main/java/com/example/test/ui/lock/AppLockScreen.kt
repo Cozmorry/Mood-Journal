@@ -37,7 +37,12 @@ fun AppLockGate(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    if (uiState.locked) {
+    // If the device has since lost its only credential (e.g. the user removed
+    // their screen lock after enabling this), there's nothing left to
+    // authenticate against and the lock would trap the user with no way back
+    // in. A device with no screen lock can't meaningfully protect anything
+    // anyway, so skip the gate rather than show an unrecoverable lock screen.
+    if (uiState.locked && biometricAuthenticator.isAvailable()) {
         val promptAuthentication = {
             biometricAuthenticator.authenticate(
                 activity = activity,

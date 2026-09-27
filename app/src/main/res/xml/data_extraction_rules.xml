@@ -13,10 +13,12 @@
              (lives in noBackupFilesDir, never backed up) and the POST_NOTIFICATIONS grant
              (never transfers on restore), both of which restoring alone can't recreate. -->
         <exclude domain="sharedpref" path="reminder_prefs.xml"/>
+        <exclude domain="sharedpref" path="app_lock_prefs.xml"/>
     </cloud-backup>
     <device-transfer>
         <!-- Same reasoning as the cloud-backup exclude above: device-to-device transfer
              is a separate mechanism and defaults to transferring everything too. -->
         <exclude domain="sharedpref" path="reminder_prefs.xml"/>
+        <exclude domain="sharedpref" path="app_lock_prefs.xml"/>
     </device-transfer>
 </data-extraction-rules>

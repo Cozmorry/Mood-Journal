@@ -14,4 +14,9 @@
          (lives in noBackupFilesDir, never backed up) and the POST_NOTIFICATIONS grant
          (never transfers on restore), both of which restoring alone can't recreate. -->
     <exclude domain="sharedpref" path="reminder_prefs.xml"/>
+    <!-- Whether a device can authenticate (screen lock / fingerprint enrolled) is
+         device-specific and can't be restored: carrying "enabled=true" onto a
+         device with no screen lock, or a different device entirely, would either
+         lock the user out or silently do nothing depending on that device's setup. -->
+    <exclude domain="sharedpref" path="app_lock_prefs.xml"/>
 </full-backup-content>
