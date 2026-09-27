@@ -55,7 +55,8 @@ past — there is no route to navigate around.
 `ComponentActivity`, so this is a safe supertype swap with no other
 behavior change.
 
-**New dependency**: `androidx.biometric:biometric:1.2.0` — Jetpack's
+**New dependency**: `androidx.biometric:biometric:1.1.0` (the latest stable
+release — the 1.2.0 line has never left alpha) — Jetpack's
 standard biometric library, not the deprecated `FingerprintManager` API. Its
 `USE_BIOMETRIC` permission is a normal permission merged into the manifest
 automatically; no manifest edits needed.
