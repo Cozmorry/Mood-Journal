@@ -42,6 +42,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.test.reminder.ReminderPreferences
 import com.example.test.reminder.ReminderScheduler
+import com.example.test.security.AppLockPreferences
+import com.example.test.security.BiometricAuthenticator
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,9 +51,15 @@ import java.util.Locale
 fun SettingsScreen(
     reminderPreferences: ReminderPreferences,
     reminderScheduler: ReminderScheduler,
+    appLockPreferences: AppLockPreferences,
+    biometricAuthenticator: BiometricAuthenticator,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = viewModel(
-        factory = viewModelFactory { initializer { SettingsViewModel(reminderPreferences, reminderScheduler) } },
+        factory = viewModelFactory {
+            initializer {
+                SettingsViewModel(reminderPreferences, reminderScheduler, appLockPreferences, biometricAuthenticator)
+            }
+        },
     ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,6 +134,26 @@ fun SettingsScreen(
                     modifier = Modifier
                         .padding(top = 16.dp)
                         .clickable { showTimePicker = true },
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Fingerprint unlock")
+                Switch(
+                    checked = uiState.appLockEnabled,
+                    onCheckedChange = { checked -> viewModel.onAppLockToggled(checked) },
+                )
+            }
+            if (uiState.appLockUnavailable) {
+                Text(
+                    "No fingerprint or device lock set up on this device",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
         }

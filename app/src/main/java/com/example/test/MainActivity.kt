@@ -48,6 +48,8 @@ class MainActivity : FragmentActivity() {
                         photoStorage = photoStorage,
                         reminderPreferences = reminderPreferences,
                         reminderScheduler = reminderScheduler,
+                        appLockPreferences = appLockPreferences,
+                        biometricAuthenticator = biometricAuthenticator,
                         startAtNewEntry = startAtNewEntry,
                     )
                 }
